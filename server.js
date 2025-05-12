@@ -31,6 +31,10 @@ function authenticateBearerToken(req, res, next) {
   next();
 }
 
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to the Mail Service API!" });
+});
+
 app.post("/api/send-email", authenticateBearerToken, async (req, res) => {
   const { to, cc, bcc, message, subject } = req.body;
 
