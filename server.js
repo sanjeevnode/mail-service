@@ -14,7 +14,7 @@ app.use(express.json({ limit: "10mb" }));
 const client = new MailtrapClient({ token: process.env.MAILTRAP_TOKEN });
 
 // Auth middleware
-function authenticateBearerToken(req, res, next) {
+async function authenticateBearerToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res
@@ -24,11 +24,24 @@ function authenticateBearerToken(req, res, next) {
 
   const token = authHeader.split(" ")[1];
 
-  if (token !== process.env.BEARER_SECRET) {
+  var result = await verifyToken(token);
+  if (!result) {
     return res.status(403).json({ error: "Invalid token" });
   }
 
   next();
+}
+
+async function verifyToken(token) {
+  const captchaSecret = process.env.CAPTCHA_SECRET;
+  const response = await fetch(
+    `https://www.google.com/recaptcha/api/siteverify?secret=${captchaSecret}&response=${token}`,
+    {
+      method: "POST",
+    }
+  );
+  const data = await response.json();
+  return data.success;
 }
 
 app.get("/", (req, res) => {
